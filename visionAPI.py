@@ -76,7 +76,7 @@ class ImageProcessor:
 
     def ask_question_to_vision_api(self, send_image: bool = False):
         question = f"""
-        please fill the following json strings with the informations from the image and the ocr data without further informations and comments.
+        please fill the following json strings with the informations from the image and the ocr data without further informations and comments without mardown notation.
             "interpret": null,
             "album_title": null,
             "release_year": null,
