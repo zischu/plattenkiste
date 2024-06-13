@@ -105,6 +105,7 @@ class ImageProcessor:
             response = client.post(url, headers=headers, json=data, timeout=10)
         response = response.json()
         response = response["choices"][0]["message"]["content"]
+        print(response)
         self.parsed_response = self.parse_response(response)
 
     @staticmethod
