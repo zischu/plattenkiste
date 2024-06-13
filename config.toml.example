@@ -1,0 +1,5 @@
+[api]
+key = "your key"
+
+[paths]
+image_path = "path\to\image"
