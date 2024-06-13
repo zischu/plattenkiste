@@ -1,12 +1,13 @@
-import httpx
-from PIL import Image
-import io
-from pathlib import Path
 import base64
-import pytesseract
-import toml
+import io
 import json
 import re
+from pathlib import Path
+
+import httpx
+import pytesseract
+import toml
+from PIL import Image
 
 
 class ConfigLoader:
@@ -75,8 +76,8 @@ class ImageProcessor:
 
     def ask_question_to_vision_api(self):
         question = f"""
-        Give me interpret, title, label, release year, and country printed of these vinyl json string.
-        Here is also the result of an OCR:\n{self.text}"""
+        Give me interpret, title, label, release year, and country printed of these
+        vinyl json string. Here is also the result of an OCR:\n{self.text}"""
 
         url = "https://api.openai.com/v1/chat/completions"
         headers = {
