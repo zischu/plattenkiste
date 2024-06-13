@@ -33,9 +33,9 @@ class ImageProcessor:
         self.original_image = None
         self.parsed_response = None
 
-    def process(self):
+    def process(self, send_image):
         self.preprocess_image()
-        self.ask_question_to_vision_api()
+        self.ask_question_to_vision_api(send_image)
 
     def show_image(self):
         if self.original_image:
@@ -74,34 +74,53 @@ class ImageProcessor:
         cleaned_lines = [line for line in lines if line.strip()]
         return "\n".join(cleaned_lines)
 
-    def ask_question_to_vision_api(self):
+    def ask_question_to_vision_api(self, send_image: bool = False):
         question = f"""
-        Give me interpret, title, label, release year, and country printed of these
-        vinyl json string. Here is also the result of an OCR:\n{self.text}"""
+        please fill the following json strings with the informations from the image and the ocr data without further informations and comments.
+            "interpret": null,
+            "album_title": null,
+            "release_year": null,
+            "country printed": null,
+            "catalog_number": null
+        Here is also the result of an OCR:\n{self.text}"""
 
         url = "https://api.openai.com/v1/chat/completions"
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
         }
-        data = {
-            "model": "gpt-4o",
-            "messages": [
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": question},
-                        {
-                            "type": "image_url",
-                            "image_url": {
-                                "url": f"data:image/jpeg;base64,{self.image_base64}"
+        if send_image:
+            data = {
+                "model": "gpt-4o",
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": question},
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:image/jpeg;base64,{self.image_base64}"
+                                },
                             },
-                        },
-                    ],
-                }
-            ],
-            "max_tokens": 300,
-        }
+                        ],
+                    }
+                ],
+                "max_tokens": 300,
+            }
+        else:
+            data = {
+                "model": "gpt-4o",
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": question},
+                        ],
+                    }
+                ],
+                "max_tokens": 300,
+            }
         with httpx.Client() as client:
             response = client.post(url, headers=headers, json=data, timeout=10)
         response = response.json()
@@ -129,6 +148,6 @@ if __name__ == "__main__":
     image_processor = ImageProcessor(
         "config.toml", Path(r"C:\Users\simon.schulte\Downloads\Bild2.jpg")
     )
-    image_processor.process()
+    image_processor.process(send_image=False)
     print(image_processor.parsed_response)
     image_processor.show_image()
