@@ -64,7 +64,7 @@ def ask_question_to_vision_api(image_bytes, question, api_key):
 
 # Beispielverwendung
 if __name__ == "__main__":
-    image_path = Path(r"C:\Users\simon.schulte\Downloads\Bild2.jpg")
+    image_path = Path(r"image_path")
 
     image_bytes, ocr_result = preprocess_image(image_path)
     question = f"give me interpret, title, label, release year, and country printed of these vinyl as json structured data without any other informations. Here is also the result of an ocr:\n{ocr_result}"
