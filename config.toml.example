@@ -2,3 +2,7 @@
 # API key for accessing the OpenAI service.
 key = "your key"
 
+[discogs]
+# Personal access token for the Discogs API.
+token = "your token"
+

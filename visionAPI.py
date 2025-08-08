@@ -25,6 +25,11 @@ class ConfigLoader:
             config = toml.load(f)
         return config
 
+    @property
+    def discogs_token(self) -> Optional[str]:
+        """Return the Discogs personal access token if configured."""
+        return self.config.get("discogs", {}).get("token")
+
 
 class ImageProcessor:
     """Process images and query the OpenAI Vision API."""
@@ -34,16 +39,21 @@ class ImageProcessor:
         self.config = self.config_loader.config
         self.image_path = image_path
         self.api_key = self.config["api"].get("key") or os.getenv("OPENAI_API_KEY")
+        self.discogs_token: Optional[str] = self.config_loader.discogs_token
         self.text: Optional[str] = None
         self.image_base64: Optional[str] = None
         self.response: Optional[str] = None
         self.original_image: Optional[Image.Image] = None
         self.parsed_response: Optional[Dict[str, Any]] = None
 
-    def process(self, send_image: bool) -> None:
-        """Run preprocessing and send question to the Vision API."""
+    def process(self, send_image: bool, lookup_price: bool = False) -> None:
+        """Run preprocessing, query the Vision API and optionally look up Discogs prices."""
         self.preprocess_image()
         self.ask_question_to_vision_api(send_image)
+        if lookup_price and self.parsed_response:
+            price = fetch_discogs_price(self.parsed_response, self.discogs_token)
+            if price is not None:
+                self.parsed_response["discogs_price_eur"] = price
 
     def show_image(self) -> None:
         """Display the original image."""
@@ -147,6 +157,53 @@ class ImageProcessor:
             json.dump(self.parsed_response, f, ensure_ascii=False, indent=2)
 
 
+def fetch_discogs_price(info: Dict[str, Any], token: Optional[str]) -> Optional[float]:
+    """Fetch price suggestions from Discogs and return the lowest value."""
+    if not token:
+        return None
+    headers = {
+        "Authorization": f"Discogs token={token}",
+        "User-Agent": "plattenkiste/1.0",
+    }
+    params = {"type": "release"}
+    if info.get("album_title"):
+        params["release_title"] = info.get("album_title")
+    if info.get("catalog_number"):
+        params["catno"] = info.get("catalog_number")
+    if info.get("release_year"):
+        params["year"] = info.get("release_year")
+    try:
+        with httpx.Client() as client:
+            resp = client.get(
+                "https://api.discogs.com/database/search",
+                headers=headers,
+                params=params,
+                timeout=10,
+            )
+        resp.raise_for_status()
+        results = resp.json().get("results") or []
+        if not results:
+            return None
+        release_id = results[0].get("id")
+        if not release_id:
+            return None
+        with httpx.Client() as client:
+            resp = client.get(
+                f"https://api.discogs.com/marketplace/price_suggestions/{release_id}",
+                headers=headers,
+                timeout=10,
+            )
+        resp.raise_for_status()
+        price_data = resp.json()
+        values = [v["value"] for v in price_data.values() if isinstance(v, dict) and "value" in v]
+        if not values:
+            return None
+        return min(values)
+    except httpx.HTTPError as exc:
+        print(f"Discogs lookup failed: {exc}")
+        return None
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Process an image and query the OpenAI Vision API."
@@ -164,12 +221,17 @@ def main() -> None:
         help="Include the image in the request to the API.",
     )
     parser.add_argument(
+        "--lookup-price",
+        action="store_true",
+        help="Look up Discogs price suggestions for the parsed release.",
+    )
+    parser.add_argument(
         "--output", type=Path, help="Optional path to save the JSON response."
     )
     args = parser.parse_args()
 
     processor = ImageProcessor(args.config, args.image)
-    processor.process(send_image=args.send_image)
+    processor.process(send_image=args.send_image, lookup_price=args.lookup_price)
     if args.output:
         processor.save_response(args.output)
 
