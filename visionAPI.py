@@ -34,12 +34,18 @@ class ConfigLoader:
 class ImageProcessor:
     """Process images and query the OpenAI Vision API."""
 
-    def __init__(self, config_file: Path, image_path: Path):
+    def __init__(
+        self,
+        config_file: Path,
+        image_path: Path,
+        model: Optional[str] = None,
+        prompt_template: Optional[str] = None,
+    ):
         self.config_loader = ConfigLoader(config_file)
         self.config = self.config_loader.config
         self.image_path = image_path
         self.api_key = self.config["api"].get("key") or os.getenv("OPENAI_API_KEY")
-        self.discogs_token: Optional[str] = self.config_loader.discogs_token
+
         self.text: Optional[str] = None
         self.image_base64: Optional[str] = None
         self.response: Optional[str] = None
@@ -96,14 +102,7 @@ class ImageProcessor:
 
     def ask_question_to_vision_api(self, send_image: bool = False) -> None:
         """Query the Vision API and parse the JSON response."""
-        question = f"""
-        please fill the following json strings with the informations from the image and the ocr data without further informations and comments without mardown notation.
-            "interpret": null,
-            "album_title": null,
-            "release_year": null,
-            "country printed": null,
-            "catalog_number": null
-        Here is also the result of an OCR:\n{self.text}"""
+        question = self.prompt_template.format(ocr_text=self.text)
 
         url = "https://api.openai.com/v1/chat/completions"
         headers = {
@@ -119,7 +118,7 @@ class ImageProcessor:
                 }
             )
         data = {
-            "model": "gpt-4o",
+            "model": self.model,
             "messages": [{"role": "user", "content": content}],
             "max_tokens": 300,
         }
@@ -228,10 +227,18 @@ def main() -> None:
     parser.add_argument(
         "--output", type=Path, help="Optional path to save the JSON response."
     )
+    parser.add_argument(
+        "--model",
+        type=str,
+        help="Override the model specified in the config file.",
+    )
+    parser.add_argument(
+        "--prompt-template",
+        type=str,
+        help="Override the prompt template from the config file.",
+    )
     args = parser.parse_args()
 
-    processor = ImageProcessor(args.config, args.image)
-    processor.process(send_image=args.send_image, lookup_price=args.lookup_price)
     if args.output:
         processor.save_response(args.output)
 

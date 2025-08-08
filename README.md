@@ -12,11 +12,3 @@ Provide an `OPENAI_API_KEY` environment variable or store the key in a TOML file
 ```toml
 [api]
 key = "your key"
-
-[discogs]
-token = "your token"
-```
-
-Create a Discogs personal access token by registering an application at [discogs.com/settings/developers](https://www.discogs.com/settings/developers).
-
-The `--send-image` flag includes the processed image in the request. `--lookup-price` queries Discogs for a price suggestion, and using `--output` writes the structured response to the specified JSON file.
