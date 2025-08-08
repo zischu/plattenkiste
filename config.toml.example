@@ -1,2 +1,4 @@
 [api]
+# API key for accessing the OpenAI service.
 key = "your key"
+
