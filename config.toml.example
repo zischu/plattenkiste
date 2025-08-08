@@ -13,3 +13,7 @@ Here is also the result of an OCR:
 {ocr_text}
 """
 
+[discogs]
+# Personal access token for the Discogs API.
+token = "your token"
+
