@@ -45,6 +45,11 @@ class ImageProcessor:
         self.config = self.config_loader.config
         self.image_path = image_path
         self.api_key = self.config["api"].get("key") or os.getenv("OPENAI_API_KEY")
+        self.model = model or self.config["api"].get("model")
+        self.prompt_template = (
+            prompt_template or self.config["api"].get("prompt_template", "")
+        )
+        self.discogs_token = self.config_loader.discogs_token
 
         self.text: Optional[str] = None
         self.image_base64: Optional[str] = None
@@ -238,6 +243,13 @@ def main() -> None:
         help="Override the prompt template from the config file.",
     )
     args = parser.parse_args()
+    processor = ImageProcessor(
+        config_file=args.config,
+        image_path=args.image,
+        model=args.model,
+        prompt_template=args.prompt_template,
+    )
+    processor.process(send_image=args.send_image, lookup_price=args.lookup_price)
 
     if args.output:
         processor.save_response(args.output)
