@@ -40,11 +40,18 @@ class ImageProcessor:
         image_path: Path,
         model: Optional[str] = None,
         prompt_template: Optional[str] = None,
+        discogs_token: Optional[str] = None,
     ):
         self.config_loader = ConfigLoader(config_file)
         self.config = self.config_loader.config
         self.image_path = image_path
         self.api_key = self.config["api"].get("key") or os.getenv("OPENAI_API_KEY")
+
+        self.model = model or self.config.get("api", {}).get("model")
+        self.prompt_template = (
+            prompt_template or self.config.get("api", {}).get("prompt_template")
+        )
+        self.discogs_token = discogs_token or self.config_loader.discogs_token
 
         self.text: Optional[str] = None
         self.image_base64: Optional[str] = None
