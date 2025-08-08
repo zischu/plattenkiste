@@ -26,4 +26,3 @@ Here is also the result of an OCR:
 ```
 
 The `--send-image` flag includes the processed image in the request. Using `--output` writes the structured response to the specified JSON file.
-Use `--model` or `--prompt-template` to override the respective values from the configuration file.
