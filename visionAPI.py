@@ -45,6 +45,8 @@ class ImageProcessor:
         self.config = self.config_loader.config
         self.image_path = image_path
         self.api_key = self.config["api"].get("key") or os.getenv("OPENAI_API_KEY")
+        # Store the Discogs token so it can be reused later.
+        self.discogs_token = self.config_loader.discogs_token
 
         self.text: Optional[str] = None
         self.image_base64: Optional[str] = None
@@ -57,7 +59,10 @@ class ImageProcessor:
         self.preprocess_image()
         self.ask_question_to_vision_api(send_image)
         if lookup_price and self.parsed_response:
-            price = fetch_discogs_price(self.parsed_response, self.discogs_token)
+            # Use the configured Discogs token when looking up prices.
+            price = fetch_discogs_price(
+                self.parsed_response, self.discogs_token
+            )
             if price is not None:
                 self.parsed_response["discogs_price_eur"] = price
 
