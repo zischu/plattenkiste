@@ -15,3 +15,12 @@ key = "your key"
 ```
 
 The `--send-image` flag includes the processed image in the request. Using `--output` writes the structured response to the specified JSON file.
+
+## Testing
+
+Run the test suite with:
+
+```bash
+pytest
+```
+
