@@ -1,4 +1,15 @@
 [api]
 # API key for accessing the OpenAI service.
 key = "your key"
+model = "gpt-4o"
+prompt_template = """
+please fill the following json strings with the informations from the image and the ocr data without further informations and comments without mardown notation.
+    "interpret": null,
+    "album_title": null,
+    "release_year": null,
+    "country printed": null,
+    "catalog_number": null
+Here is also the result of an OCR:
+{ocr_text}
+"""
 
